@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Discord User Management System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      transition: background 0.3s ease;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+      width: 100%;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .header h1 {
+      color: #333;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      user-select: none;
+    }
+    .header p {
+      color: #666;
+      font-size: 1.1em;
+      user-select: none;
+    }
+    .form-section {
+      background: #f8f9fa;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid #e9ecef;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      user-select: none;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn-secondary {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      margin-top: 20px;
+    }
+    .results {
+      background: #e8f5e8;
+      border: 1px solid #c3e6c3;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+      user-select: text;
+      word-break: break-word;
+    }
+    .results.error {
+      background: #ffeaea;
+      border-color: #ffcccb;
+    }
+    .results h3 {
+      color: #2d5a2d;
+      margin-bottom: 15px;
+      user-select: none;
+    }
+    .results.error h3 {
+      color: #d32f2f;
+    }
+    .credential-box {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      user-select: text;
+    }
+    .credential-box h4 {
+      color: #333;
+      margin-bottom: 10px;
+      user-select: none;
+    }
+    .credential-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      font-family: monospace;
+      font-size: 14px;
+      user-select: text;
+    }
+    .credential-item strong {
+      color: #666;
+    }
+    .admin-link {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #e9ecef;
+      user-select: none;
+    }
+    .admin-link button {
+      user-select: none;
+    }
+    .admin-link p {
+      color: #666;
+      margin: 10px 0;
+    }
+
+    /* Admin Panel overlay container */
+    #adminContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw; 
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      padding: 20px;
+      box-sizing: border-box;
+      color: #333;
+      user-select: none;
+    }
+    #adminContent {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 1100px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      user-select: text;
+      display: flex;
+      flex-direction: column;
+    }
+    #adminContent header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    #adminContent header h1 {
+      font-size: 2rem;
+      color: #333;
+      user-select: none;
+    }
+    #adminContent header button {
+      background: linear-gradient(45deg, #6b7280, #4b5563);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+    #adminContent header button:hover {
+      box-shadow: 0 10px 20px rgba(107,114,128,0.3);
+    }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .users-table th, .users-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e9ecef;
+      font-size: 14px;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    .users-table th {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      font-weight: 600;
+      user-select: none;
+    }
+    .users-table tr:hover {
+      background: #f8f9fa;
+    }
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: #10b981;
+    }
+    .download-btn {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      margin: 2px 2px 2px 0;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    .download-btn:hover {
+      background: #047857;
+    }
+    .cert-info {
+      font-size: 12px;
+      line-height: 1.3;
+      white-space: normal;
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 20px;
+      }
+      #adminContent {
+        max-height: 85vh;
+        padding: 20px;
+      }
+      .users-table th, .users-table td {
+        font-size: 12px;
+        padding: 8px;
+      }
+    }
+
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0,0,0,0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="mainContainer" aria-label="Discord User Management Application">
+    <div class="header">
+      <h1>Discord User Management</h1>
+      <p>Erstelle FTP, Datenbank &amp; Zertifikat Zugänge für Discord Mitglieder</p>
+    </div>
+
+    <div class="form-section" aria-label="Neuen Benutzer erstellen">
+      <h2>Neuen Benutzer erstellen</h2>
+      <form id="userForm" aria-describedby="formDescription" aria-live="polite">
+        <div id="formDescription" class="sr-only">Formular zum Erstellen eines neuen Discord Benutzers mit ftp, datenbank und zertifikat details</div>
+        <div class="form-group">
+          <label for="discordName">Discord Benutzername:</label>
+          <input type="text" id="discordName" name="discordName" placeholder="z.B. MaxMustermann#1234" required aria-required="true" autocomplete="off" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ftpServer">FTP Server:</label>
+            <input type="text" id="ftpServer" name="ftpServer" placeholder="ftp.example.com" value="localhost" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="ftpPort">FTP Port:</label>
+            <input type="number" id="ftpPort" name="ftpPort" placeholder="21" value="21" min="1" max="65535" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dbServer">Datenbank Server:</label>
+            <input type="text" id="dbServer" name="dbServer" placeholder="localhost" value="localhost" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="dbPort">Datenbank Port:</label>
+            <input type="number" id="dbPort" name="dbPort" placeholder="3306" value="3306" min="1" max="65535" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="dbType">Datenbank Typ:</label>
+          <select id="dbType" name="dbType" aria-label="Datenbank Typ Auswahl" autocomplete="off">
+            <option value="mysql">MySQL</option>
+            <option value="postgresql">PostgreSQL</option>
+            <option value="mssql">Microsoft SQL Server</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="certType">Zertifikat Typ:</label>
+          <select id="certType" name="certType" aria-label="Zertifikat Typ Auswahl" autocomplete="off">
+            <option value="ssl">SSL/TLS Zertifikat</option>
+            <option value="client">Client Zertifikat</option>
+            <option value="code_signing">Code Signing Zertifikat</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="certValidDays">Gültigkeit (Tage):</label>
+            <input type="number" id="certValidDays" name="certValidDays" placeholder="365" value="365" min="1" max="3650" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="keySize">Schlüsselgröße (Bits):</label>
+            <select id="keySize" name="keySize" aria-label="Schlüsselgröße Auswahl" autocomplete="off">
+              <option value="2048">2048 Bit</option>
+              <option value="3072">3072 Bit</option>
+              <option value="4096" selected>4096 Bit</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn" aria-live="polite">Benutzer erstellen</button>
+      </form>
+
+      <div id="results" class="results" role="region" aria-live="polite" aria-atomic="true"></div>
+    </div>
+
+    <div class="admin-link" role="region" aria-label="Administratoren Bereich">
+      <h3>Administratoren-Bereich</h3>
+      <p>Zugriff auf alle Benutzer und deren Credentials</p>
+      <button class="btn btn-secondary" onclick="openAdminPanel()" aria-haspopup="dialog">Admin Panel öffnen</button>
+    </div>
+  </div>
+
+  <!-- Admin panel container -->
+  <div id="adminContainer" aria-modal="true" role="dialog" aria-hidden="true" style="display:none;">
+    <div id="adminContent" tabindex="-1"></div>
+  </div>
+
+  <script>
+    const adminCredentials = {
+      username: 'admin',
+      password: 'secure123'
+    };
+
+    let userDatabase = JSON.parse(localStorage.getItem('userDatabase') || '[]');
+
+    document.getElementById('userForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const discordName = formData.get('discordName').trim();
+      const ftpServer = formData.get('ftpServer').trim();
+      const ftpPort = parseInt(formData.get('ftpPort')) || 21;
+      const dbServer = formData.get('dbServer').trim();
+      const dbPort = parseInt(formData.get('dbPort')) || 3306;
+      const dbType = formData.get('dbType');
+      const certType = formData.get('certType');
+      const certValidDays = parseInt(formData.get('certValidDays')) || 365;
+      const keySize = parseInt(formData.get('keySize')) || 4096;
+
+      if (!discordName) {
+        showResults('Bitte Discord Benutzername eingeben!', true);
+        return;
+      }
+
+      try {
+        const res = await fetch('http://DeineIP:3000/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            discordName,
+            ftpServer,
+            ftpPort,
+            dbServer,
+            dbPort,
+            dbType,
+            certType,
+            certValidDays,
+            keySize
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Fehler beim Erstellen');
+
+        userDatabase.push(data.user || data);
+        localStorage.setItem('userDatabase', JSON.stringify(userDatabase));
+
+        showResults(false, 'Benutzer erfolgreich erstellt!', data);
+        e.target.reset();
+      } catch (err) {
+        showResults(true, `Fehler: ${err.message}`);
+      }
+    });
+
+    /**
+     * Shows the results box with message and optional user data
+     * @param {boolean} isError - true if error
+     * @param {string} message - message to display
+     * @param {Object} [data] - optional user creation data to show credentials
+     */
+    function showResults(isError, message, data = null) {
+      const results = document.getElementById('results');
+      results.style.display = 'block';
+
+      if (isError) {
+        results.className = 'results error';
+        results.innerHTML = `<h3>✖️ ${message}</h3>`;
+        return;
+      }
+
+      let html = `<h3>✔️ ${message}</h3>`;
+
+      if (data && data.user) {
+        const user = data.user;
+        html += `<div class="credential-box" aria-label="Benutzer Zugangsdetails">
+          <h4>FTP Zugang</h4>
+          <div class="credential-item"><strong>Server:</strong> ${user.ftpServer}:${user.ftpPort}</div>
+          <div class="credential-item"><strong>Benutzername:</strong> <code>${user.ftpUsername}</code></div>
+          <div class="credential-item"><strong>Passwort:</strong> <code>${user.ftpPassword}</code></div>
+        </div>
+        <div class="credential-box" aria-label="Datenbank Zugangsdaten">
+          <h4>Datenbank Zugang</h4>
+          <div class="credential-item"><strong>Server:</strong> ${user.dbServer}:${user.dbPort}</div>
+          <div class="credential-item"><strong>Typ:</strong> ${user.dbType}</div>
+          <div class="credential-item"><strong>Benutzername:</strong> <code>${user.dbUsername}</code></div>
+          <div class="credential-item"><strong>Passwort:</strong> <code>${user.dbPassword}</code></div>
+        </div>
+        <div class="credential-box" aria-label="Zertifikat Details">
+          <h4>Zertifikat</h4>
+          <div class="credential-item"><strong>Typ:</strong> ${user.certificate.type}</div>
+          <div class="credential-item"><strong>Seriennummer:</strong> ${user.certificate.serialNumber}</div>
+          <div class="credential-item"><strong>Gültig bis:</strong> ${new Date(user.certificate.validTo).toLocaleDateString('de-DE')}</div>
+          <div class="credential-item"><strong>Schlüsselgröße:</strong> ${user.certificate.keySize} Bit</div>
+        </div>`;
+
+        if (data.downloadUrl) {
+          const baseUrl = window.location.origin || 'DeineIP:3000';
+          html += `
+          <div style="margin-top:15px;">
+            <p><strong>Downloadlink (3 Minuten gültig):</strong></p>
+            <a href="${baseUrl}${data.downloadUrl}" target="_blank" rel="noopener noreferrer" id="oneTimeDownloadLink">${baseUrl}${data.downloadUrl}</a>
+            <p id="countdown" style="color:red; font-weight:bold;">Verbleibende Zeit: 03:00</p>
+          </div>`;
+        }
+      }
+
+      results.className = 'results';
+      results.innerHTML = html;
+
+      if (data && data.downloadUrl) {
+        let timeLeft = 180;
+        const countdownEl = document.getElementById('countdown');
+        const timerId = setInterval(() => {
+          timeLeft--;
+          if (countdownEl) {
+            const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+            const seconds = String(timeLeft % 60).padStart(2, '0');
+            countdownEl.textContent = `Verbleibende Zeit: ${minutes}:${seconds}`;
+          }
+          if (timeLeft <= 0) {
+            clearInterval(timerId);
+            if (countdownEl) countdownEl.textContent = 'Downloadlink abgelaufen';
+            const link = document.getElementById('oneTimeDownloadLink');
+            if (link) {
+              link.removeAttribute('href');
+              link.style.pointerEvents = 'none';
+              link.style.color = '#999';
+            }
+          }
+        }, 1000);
+      }
+    }
+
+    const adminContainer = document.getElementById('adminContainer');
+    const adminContent = document.getElementById('adminContent');
+
+    // Accessibility: trap focus inside admin panel when open.
+    function trapFocus(element) {
+      const focusableEls = element.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+      const firstFocusableEl = focusableEls[0];
+      const lastFocusableEl = focusableEls[focusableEls.length -1];
+
+      element.addEventListener('keydown', function(e) {
+        let isTabPressed = e.key === 'Tab' || e.keyCode === 9;
+        if (!isTabPressed) return;
+
+        if (e.shiftKey) { // shift + tab
+          if (document.activeElement === firstFocusableEl) {
+            lastFocusableEl.focus();
+            e.preventDefault();
+          }
+        } else { // tab
+          if (document.activeElement === lastFocusableEl) {
+            firstFocusableEl.focus();
+            e.preventDefault();
+          }
+        }
+      });
+    }
+
+    function openAdminPanel() {
+      document.body.style.overflow = 'hidden';
+      adminContainer.style.display = 'flex';
+      adminContainer.setAttribute('aria-hidden', 'false');
+      document.getElementById('mainContainer').style.opacity = '0.5';
+      showAdminLogin();
+      trapFocus(adminContainer);
+    }
+
+    function closeAdminPanel() {
+      document.body.style.overflow = '';
+      adminContainer.style.display = 'none';
+      adminContainer.setAttribute('aria-hidden', 'true');
+      document.getElementById('mainContainer').style.opacity = '1';
+      adminContent.innerHTML = '';
+      document.getElementById('userForm').querySelector('input, select, button').focus();
+    }
+
+    function showAdminLogin() {
+      adminContent.innerHTML = `
+        <header>
+          <h1>Admin Login</h1>
+        </header>
+        <form id="adminLoginForm" aria-label="Admin Login Form">
+          <div id="adminLoginError" role="alert" aria-live="assertive" style="color: red; margin-bottom: 10px; display: none;"></div>
+          <div class="form-group">
+            <label for="adminUsername">Benutzername:</label>
+            <input type="text" id="adminUsername" name="adminUsername" autocomplete="username" required />
+          </div>
+          <div class="form-group">
+            <label for="adminPassword">Passwort:</label>
+            <input type="password" id="adminPassword" name="adminPassword" autocomplete="current-password" required />
+          </div>
+          <button type="submit" class="btn">Anmelden</button>
+          <button type="button" class="btn" style="margin-top: 12px; background: #666;" onclick="closeAdminPanel()">Abbrechen</button>
+        </form>
+      `;
+      document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+      document.getElementById('adminUsername').focus();
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const errorDiv = document.getElementById('adminLoginError');
+
+      if (username === adminCredentials.username && password === adminCredentials.password) {
+        errorDiv.style.display = 'none';
+        showAdminPanel();
+      } else {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Ungültiger Benutzername oder Passwort!';
+      }
+    }
+
+    async function showAdminPanel() {
+      adminContent.innerHTML = `
+        <header>
+          <h1>Admin Panel</h1>
+          <button onclick="logoutAdmin()" aria-label="Abmelden">Abmelden</button>
+        </header>
+        <div style="margin-bottom: 20px;">
+          <button class="btn" onclick="loadUsers()" style="width:auto; padding: 10px 20px; font-size:14px;">Daten aktualisieren</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="users-table" aria-label="Liste aller Discord Benutzer">
+            <thead>
+              <tr>
+                <th>Discord Name</th>
+                <th>FTP Zugangsdaten</th>
+                <th>Datenbank Zugangsdaten</th>
+                <th>Zertifikat</th>
+                <th>Downloads</th>
+                <th>Erstellt am</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="7" style="text-align:center; color:#666;">Lade Benutzerdaten...</td></tr>
+            </tbody>
+          </table>
+        </div>`;
+      await loadUsers();
+    }
+
+    function logoutAdmin() {
+      showAdminLogin();
+    }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch('http://DeineIp:3000/api/get-users');
+        if (!res.ok) throw new Error('Fehler beim Laden der Benutzerdaten');
+        const users = await res.json();
+        const tbody = document.getElementById('usersTableBody');
+
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#666;">Keine Benutzer vorhanden</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = users.map(user => {
+          const cert = user.certificate || {};
+          return `<tr>
+              <td><strong>${user.discordName}</strong></td>
+              <td style="font-size:12px; line-height:1.4;">
+                <div><strong>Server:</strong> ${user.ftpServer}:${user.ftpPort}</div>
+                <div><strong>User:</strong> <code>${user.ftpUsername}</code></div>
+                <div><strong>Pass:</strong> <code>${user.ftpPassword}</code></div>
+              </td>
+              <td style="font-size:12px; line-height:1.4;">
+                <div><strong>Server:</strong> ${user.dbServer}:${user.dbPort}</div>
+                <div><strong>Typ:</strong> ${user.dbType}</div>
+                <div><strong>User:</strong> <code>${user.dbUsername}</code></div>
+                <div><strong>Pass:</strong> <code>${user.dbPassword}</code></div>
+              </td>
+              <td class="cert-info" style="font-size:12px; line-height:1.3; white-space:normal;">
+                <div><strong>Typ:</strong> ${cert.type || '-'}</div>
+                <div><strong>Seriennr.:</strong> ${cert.serialNumber || '-'}</div>
+                <div><strong>Gültig bis:</strong> ${cert.validTo ? new Date(cert.validTo).toLocaleDateString('de-DE') : '-'}</div>
+                <div><strong>Schlüsselgröße:</strong> ${cert.keySize ? cert.keySize + ' Bit' : '-'}</div>
+              </td>
+              <td>
+                <button class="download-btn" onclick="downloadCredentials('${user.id}', 'ftp')" aria-label="FTP Zugang herunterladen">FTP</button>
+                <button class="download-btn" onclick="downloadCredentials('${user.id}', 'db')" aria-label="Datenbank Zugang herunterladen">DB</button>
+                <button class="download-btn" onclick="downloadCredentials('${user.id}', 'cert')" aria-label="Zertifikat herunterladen">Zertifikat</button>
+              </td>
+              <td>${user.createdAt || '-'}</td>
+              <td><span class="status-indicator" aria-label="Status: Aktiv" title="Status: Aktiv"></span> ${user.status || 'Unbekannt'}</td>
+            </tr>`;
+        }).join('');
+      } catch (error) {
+        alert('Fehler beim Laden der Benutzerdaten vom Server.');
+        console.error(error);
+      }
+    }
+
+    async function downloadCredentials(userId, type) {
+      if (!userId || !type) {
+        alert('Ungültige Download-Anfrage.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://DeineIP:3000/api/download-credentials?userId=${encodeURIComponent(userId)}&type=${encodeURIComponent(type)}`);
+        if (!response.ok) throw new Error('Fehler beim Herunterladen der Datei.');
+
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'credentials.txt';
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          filename = contentDisposition.split('filename=')[1].trim();
+          filename = filename.replace(/['"]/g, '');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        alert(`Fehler: ${error.message}`);
+      }
+    }
+  </script>
+</body>
+</html>
+
